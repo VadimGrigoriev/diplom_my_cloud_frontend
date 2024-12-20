@@ -8,6 +8,7 @@ const persistConfig = {
   key: 'root',
   storage,
   serialize: false,
+  whitelist: ["auth"],  // Сохраняем auth
 };
 
 const persistedAuthReducer = persistReducer(persistConfig, authReducer);
@@ -22,9 +23,11 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST"],
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
+        ignoredPaths: ["err"],
       },
     }),
 });
 
+export default store;
 export const persistor = persistStore(store);
