@@ -12,8 +12,9 @@ const RegisterPage = () => {
   const { loading, error, success } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    email: "",
     username: "",
+    fullName: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -37,7 +38,7 @@ const RegisterPage = () => {
   
   useEffect(() => {
     return () => {
-      dispatch(clearAuthState()); // Очищаем состояние при размонтировании
+      dispatch(clearAuthState());
     };
   }, [dispatch]);
 
@@ -51,26 +52,35 @@ const RegisterPage = () => {
   const validateForm = () => {
     const errors = {};
     
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Username validation
+    const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]{3,19}$/;
+    if (!formData.username) {
+      errors.username = "Имя пользователя обязательно";
+    } else if (!usernameRegex.test(formData.username)) {
+      errors.username = "Имя пользователя должно:\n- Начинаться с буквы\n- Содержать только латинские буквы и цифры\n- Быть длиной от 4 до 20 символов";
+    }
+
+    // Full name validation
+    if (!formData.fullName) {
+      errors.fullName = "Полное имя обязательно";
+    } else if (formData.fullName.length < 3) {
+      errors.fullName = "Полное имя должно быть не короче 3 символов";
+    }
+
+    // Email validation with more strict regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!formData.email) {
       errors.email = "Email обязателен";
     } else if (!emailRegex.test(formData.email)) {
-      errors.email = "Некорректный формат email";
+      errors.email = "Введите корректный email адрес";
     }
 
-    // Username validation
-    if (!formData.username) {
-      errors.username = "Имя пользователя обязательно";
-    } else if (formData.username.length < 3) {
-      errors.username = "Имя пользователя должно быть не короче 3 символов";
-    }
-
-    // Password validation
+    // Password validation - min 6 chars, 1 uppercase, 1 number, 1 special char
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
     if (!formData.password) {
       errors.password = "Пароль обязателен";
-    } else if (formData.password.length < 8) {
-      errors.password = "Пароль должен быть не короче 8 символов";
+    } else if (!passwordRegex.test(formData.password)) {
+      errors.password = "Пароль должен содержать:\n- Минимум 6 символов\n- Хотя бы одну заглавную букву\n- Хотя бы одну цифру\n- Хотя бы один специальный символ (!@#$%^&*)";
     }
 
     // Confirm password validation
@@ -103,17 +113,30 @@ const RegisterPage = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      dispatch(registerUser({
-        email: formData.email,
+      const userData = {
         username: formData.username,
-        password: formData.password
-      })).then((response) => {
+        full_name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      };
+      console.log("Данные для регистрации:", userData); // Отладочная информация
+      dispatch(registerUser(userData)).then((response) => {
         if (response.meta.requestStatus === "fulfilled") {
-          // Если регистрация успешна, перенаправляем на Dashboard
+
           navigate("/dashboard");
         }
       });
     }
+  };
+
+  // Helper function to render validation errors with line breaks
+  const renderValidationError = (error) => {
+    return error.split('\n').map((line, index) => (
+      <span key={index}>
+        {line}
+        {index < error.split('\n').length - 1 && <br />}
+      </span>
+    ));
   };
 
   return (
@@ -138,6 +161,50 @@ const RegisterPage = () => {
           )}
 
           <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Логин
+            </label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className={`mt-1 block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                validationErrors.username ? "border-red-500" : "border-gray-300"
+              }`}
+              required
+            />
+            {validationErrors.username && (
+              <p className="mt-1 text-sm text-red-600">
+                {renderValidationError(validationErrors.username)}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              Полное имя
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className={`mt-1 block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                validationErrors.fullName ? "border-red-500" : "border-gray-300"
+              }`}
+              required
+            />
+            {validationErrors.fullName && (
+              <p className="mt-1 text-sm text-red-600">
+                {renderValidationError(validationErrors.fullName)}
+              </p>
+            )}
+          </div>
+
+          <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
@@ -148,35 +215,13 @@ const RegisterPage = () => {
               value={formData.email}
               onChange={handleChange}
               className={`mt-1 block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                validationErrors.email ? 'border-red-500' : 'border-gray-300'
+                validationErrors.email ? "border-red-500" : "border-gray-300"
               }`}
               required
             />
             {validationErrors.email && (
               <p className="mt-1 text-sm text-red-600">
-                {validationErrors.email}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Имя пользователя
-            </label>
-            <input
-              id="username"
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                validationErrors.username ? 'border-red-500' : 'border-gray-300'
-              }`}
-              required
-            />
-            {validationErrors.username && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.username}
+                {renderValidationError(validationErrors.email)}
               </p>
             )}
           </div>
@@ -209,7 +254,7 @@ const RegisterPage = () => {
             </button>
             {validationErrors.password && (
               <p className="mt-1 text-sm text-red-600">
-                {validationErrors.password}
+                {renderValidationError(validationErrors.password)}
               </p>
             )}
           </div>
@@ -242,7 +287,7 @@ const RegisterPage = () => {
             </button>
             {validationErrors.confirmPassword && (
               <p className="mt-1 text-sm text-red-600">
-                {validationErrors.confirmPassword}
+                {renderValidationError(validationErrors.confirmPassword)}
               </p>
             )}
           </div>
