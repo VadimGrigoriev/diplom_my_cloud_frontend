@@ -4,10 +4,11 @@ import FileItem from "./FileItem";
 const FilesList = ({
   files,
   loading,
-  onGenerateLink,      // handleLinkButtonClick
+  onGenerateLink,       // handleLinkButtonClick
   onDownloadFile,       // handleDownload
   onSelectFileComment,  // setSelectedFileToComment
-  onDeleteFile          // setFileToDelete
+  onDeleteFile,         // setFileToDelete
+  onRenameFile
 }) => {
   return (
     <section>
@@ -31,6 +32,7 @@ const FilesList = ({
               onDownloadFile={onDownloadFile}
               onSelectFileComment={onSelectFileComment}
               onDeleteFile={onDeleteFile}
+              onRenameFile={onRenameFile}
             />
           ))}
         </div>

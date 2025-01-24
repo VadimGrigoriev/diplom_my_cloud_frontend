@@ -1,7 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
-import { useDispatch } from "react-redux";
+/* eslint-disable no-unused-vars */
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import api from "../utils/api";
 import { logout } from "../features/authSlice";
+import { fetchFiles, updateComment, renameFile } from "../features/fileSlice";
 import { useNavigate } from "react-router-dom";
 import { showNotification } from "../components/ToastProvider/ToastProvider";
 
@@ -14,7 +16,6 @@ import LinkModal from "../components/Dashboard/Modals/LinkModal";
 
 
 const DashboardPage = () => {
-  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState(null);
   const [selectedFileToComment, setSelectedFileToComment] = useState(null);
@@ -22,27 +23,15 @@ const DashboardPage = () => {
   const [fileToDelete, setFileToDelete] = useState(null);
   const [generatedLink, setGeneratedLink] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const { fileList, isLoading, error } = useSelector((state) => state.files);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  
-  const fetchFiles = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await api.get("/files/");
-      setFiles(response.data.sort((a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at)));
-    } catch (error) {
-      console.error("Ошибка при загрузке файлов:", error);
-      showNotification.error("Не удалось загрузить файлы. Попробуйте обновить страницу.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
+    dispatch(fetchFiles()); // Загружаем файлы при загрузке страницы
+  }, [dispatch]);
 
+  // Обработчик для генерации ссылки для скачивания
   const handleLinkButtonClick = async (fileId) => {
     try {
       const response = await api.post(`/files/${fileId}/generate-token/`);
@@ -55,6 +44,7 @@ const DashboardPage = () => {
     }
   };
 
+  // Обработчик для скачивания файла по ссылке
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(generatedLink);
@@ -70,6 +60,7 @@ const DashboardPage = () => {
     }
   };
 
+  // Обработчик для загрузки файла
   const handleUpload = async () => {
     if (!selectedFiles) {
       showNotification.warning("Выберите файл для загрузки!");
@@ -87,7 +78,7 @@ const DashboardPage = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       
-      await fetchFiles();
+      await dispatch(fetchFiles());
 
       document.getElementById('file-upload').value = '';
       setSelectedFiles(null);
@@ -101,13 +92,14 @@ const DashboardPage = () => {
     }
   };
 
+  // Обработчик для скачивания файла
   const handleDownload = async (fileId) => {
     try {
       const response = await api.get(`/files/${fileId}/download/`, {
         responseType: 'blob'
       });
       
-      const file = files.find(f => f.id === fileId);
+      const file = fileList.find(f => f.id === fileId);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -115,19 +107,31 @@ const DashboardPage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+
+      dispatch(fetchFiles()); // Обновляем список файлов через Redux
     } catch (error) {
       console.error("Ошибка при скачивании файла:", error);
       showNotification.error("Не удалось скачать файл.");
     }
   };
 
+  // Обработчик для пеерименования файла
+  const handleRenameFile = async (fileId, newName) => {
+    try {
+      await dispatch(renameFile({ fileId, newName }));
+      showNotification.success("Файл успешно переименован!");
+    } catch (error) {
+      console.error("Ошибка при переименовании файла:", error);
+      showNotification.error("Не удалось переименовать файл.");
+    }
+  };
 
+  // Обработчик для добавления комментария
   const handleAddComment = async () => {
     if (!selectedFileToComment) return;
 
     try {
-      await api.patch(`/files/${selectedFileToComment}/`, { comment });
-      await fetchFiles();
+      await dispatch(updateComment({ fileId: selectedFileToComment, comment }));
       setSelectedFileToComment(null);
       setComment('');
       showNotification.success("Комментарий добавлен!");
@@ -137,12 +141,13 @@ const DashboardPage = () => {
     }
   };
 
+  // Обработчик для удаления файла
   const handleDeleteFile = async () => {
     if (!fileToDelete) return;
 
     try {
       await api.delete(`/files/${fileToDelete}/`);
-      await fetchFiles();
+      await dispatch(fetchFiles());
       showNotification.success("Файл успешно удален.");
       setFileToDelete(null);
     } catch (error) {
@@ -151,6 +156,7 @@ const DashboardPage = () => {
     }
   };
 
+  // Обработчик для выхода с аккаунта
   const handleLogout = () => {
     dispatch(logout());
     navigate("/");
@@ -176,12 +182,14 @@ const DashboardPage = () => {
 
         {/* Files List */}
         <FilesList
-          files={files}
-          loading={loading}
+          files={fileList}
+          loading={isLoading}
+          error={error}
           onGenerateLink={handleLinkButtonClick}
           onDownloadFile={handleDownload}
           onSelectFileComment={(id) => setSelectedFileToComment(id)}
           onDeleteFile={(id) => setFileToDelete(id)}
+          onRenameFile={handleRenameFile}
         />
       </main>
 

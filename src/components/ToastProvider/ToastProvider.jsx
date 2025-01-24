@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Toaster, toast } from 'sonner';
 
 export const showNotification = {

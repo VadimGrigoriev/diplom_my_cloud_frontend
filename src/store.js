@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from './features/userSlice';
 import authReducer from './features/authSlice';
+import fileReducer from './features/fileSlice';
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
@@ -17,6 +18,7 @@ export const store = configureStore({
   reducer: {
     user: userReducer,
     auth: persistedAuthReducer,
+    files: fileReducer,
   },
   // eslint-disable-next-line no-undef
   devTools: process.env.NODE_ENV !== 'production',  // Включить DevTools только в разработке
