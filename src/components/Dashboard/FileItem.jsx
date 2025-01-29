@@ -7,7 +7,9 @@ import {
   LinkIcon,
   EditIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  CheckIcon,
+  XIcon
 } from "lucide-react";
 import { formatFileSize } from "../../utils/formatFileSize";
 
@@ -26,37 +28,47 @@ const FileItem = ({
   const handleRenameSubmit = () => {
     if (newFileName && newFileName !== file.original_name) {
       onRenameFile(file.id, newFileName);
+    }
+    setIsRenaming(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleRenameSubmit();
+    } else if (e.key === 'Escape') {
       setIsRenaming(false);
+      setNewFileName(file.original_name);
     }
   };
 
   return (
     <div className="bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between">
-      <div className="flex-grow mr-4">
+        <div className="flex-grow mr-4">
           {isRenaming ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={newFileName}
                 onChange={(e) => setNewFileName(e.target.value)}
-                className="border rounded px-2 py-1 flex-grow"
+                onKeyDown={handleKeyPress}
+                className="border rounded-md px-3 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 autoFocus
               />
               <button 
                 onClick={handleRenameSubmit}
-                className="text-green-500 hover:text-green-700"
+                className="p-1.5 rounded-full hover:bg-green-100 text-green-600 transition-colors"
               >
-                Сохранить
+                <CheckIcon className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => {
                   setIsRenaming(false);
                   setNewFileName(file.original_name);
                 }}
-                className="text-red-500 hover:text-red-700"
+                className="p-1.5 rounded-full hover:bg-red-100 text-red-600 transition-colors"
               >
-                Отмена
+                <XIcon className="w-4 h-4" />
               </button>
             </div>
           ) : (

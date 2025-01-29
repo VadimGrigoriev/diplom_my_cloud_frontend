@@ -1,15 +1,11 @@
 /* eslint-disable react/prop-types */
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
-  if (!accessToken) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
+  return accessToken ? <Outlet /> : <Navigate to="/" replace />;
 };
 
 export default ProtectedRoute;

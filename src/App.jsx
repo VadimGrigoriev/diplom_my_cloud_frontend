@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -26,14 +26,12 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Дашборд */} 
-          <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Route>
+
+          {/* Любой несуществующий маршрут отправляет на главную */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </ToastProvider>

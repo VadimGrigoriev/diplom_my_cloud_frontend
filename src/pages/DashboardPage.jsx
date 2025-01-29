@@ -24,12 +24,17 @@ const DashboardPage = () => {
   const [generatedLink, setGeneratedLink] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const { fileList, isLoading, error } = useSelector((state) => state.files);
+  const { user, accessToken } = useSelector((state) => state.auth); // Получаем пользователя из Redux
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    dispatch(fetchFiles()); // Загружаем файлы при загрузке страницы
-  }, [dispatch]);
+    if (!accessToken) {
+      navigate("/"); // Если пользователь не авторизован, отправляем на страницу приветствия
+    } else {
+      dispatch(fetchFiles()); // Загружаем файлы при загрузке страницы
+    }
+  }, [dispatch, accessToken, navigate]);
 
   // Обработчик для генерации ссылки для скачивания
   const handleLinkButtonClick = async (fileId) => {
