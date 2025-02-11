@@ -6,6 +6,7 @@ import { logout, fetchCurrentUser } from "../features/authSlice";
 import { fetchFiles, updateComment, renameFile } from "../features/fileSlice";
 import { useNavigate } from "react-router-dom";
 import { showNotification } from "../components/ToastProvider/ToastProvider";
+import logger from "../utils/logger";
 
 import Header from "../components/Dashboard/Header";
 import FileUploadSection from "../components/Dashboard/FileUploadSection";
@@ -31,6 +32,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     if (!accessToken) {
+      logger.warn("🚪 Пользователь не авторизован. Перенаправляем на главную.");
       navigate("/"); // Если пользователь не авторизован, отправляем на страницу приветствия
     } else {
       if (!user) {
@@ -49,12 +51,13 @@ const DashboardPage = () => {
   // Обработчик для генерации ссылки для скачивания
   const handleLinkButtonClick = async (fileId) => {
     try {
+      logger.info(`🔗 Генерация ссылки для скачивания файла ID: ${fileId}`);
       const response = await api.post(`/files/${fileId}/generate-token/`);
       setGeneratedLink(response.data.download_url);
       setCopySuccess(false);
       showNotification.success("Ссылка успешно сгенерирована!");
     } catch (error) {
-      console.error("Ошибка генерации ссылки:", error);
+      logger.error(`❌ Ошибка генерации ссылки: ${error.message}`);
       showNotification.error("Не удалось сгенерировать ссылку.");
     }
   };
@@ -70,7 +73,7 @@ const DashboardPage = () => {
         setCopySuccess(false);
       }, 2000);
     } catch (error) {
-      console.error("Ошибка при копировании:", error);
+      logger.error(`❌ Ошибка при копировании ссылки: ${error.message}`);
       showNotification.error("Не удалось скопировать ссылку.");
     }
   };
@@ -95,6 +98,7 @@ const DashboardPage = () => {
 
     try {
       setLoading(true);
+      logger.info(`📤 Загружаем файлы (${selectedFiles.length} шт. на сервер)`);
       await api.post("/files/bulk-upload/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -105,9 +109,10 @@ const DashboardPage = () => {
       setSelectedFiles(null);
       setFileComments({}); // Очищаем комментарии после успешной загрузки
 
+      logger.info("✅ Файлы успешно загружены!");
       showNotification.success("Файлы успешно загружены!");
     } catch (error) {
-      console.error("Ошибка при загрузке файла:", error);
+      logger.error(`❌ Ошибка при загрузке файла: ${error.message}`);
       showNotification.error("Не удалось загрузить файлы. Попробуйте снова.");
     } finally {
       setLoading(false);
@@ -117,6 +122,7 @@ const DashboardPage = () => {
   // Обработчик для скачивания файла
   const handleDownload = async (fileId) => {
     try {
+      logger.info(`📥 Скачивание файла ID: ${fileId}`);
       const response = await api.get(`/files/${fileId}/download/`, {
         responseType: 'blob'
       });
@@ -132,7 +138,7 @@ const DashboardPage = () => {
 
       dispatch(fetchFiles()); // Обновляем список файлов через Redux
     } catch (error) {
-      console.error("Ошибка при скачивании файла:", error);
+      logger.error(`❌ Ошибка при скачивании файла ID: ${fileId}: ${error.message}`);
       showNotification.error("Не удалось скачать файл.");
     }
   };
@@ -143,7 +149,7 @@ const DashboardPage = () => {
       await dispatch(renameFile({ fileId, newName }));
       showNotification.success("Файл успешно переименован!");
     } catch (error) {
-      console.error("Ошибка при переименовании файла:", error);
+      logger.error(`❌ Ошибка при переименовании файла ID: ${fileId}: ${error.message}`);
       showNotification.error("Не удалось переименовать файл.");
     }
   };
@@ -158,7 +164,7 @@ const DashboardPage = () => {
       setComment('');
       showNotification.success("Комментарий добавлен!");
     } catch (error) {
-      console.error("Ошибка при добавлении комментария:", error);
+      logger.error(`❌ Ошибка при добавлении комментария: ${error.message}`);
       showNotification.error("Не удалось добавить комментарий.");
     }
   };
@@ -168,12 +174,13 @@ const DashboardPage = () => {
     if (!fileToDelete) return;
 
     try {
+      logger.warn(`🗑️ Удаление файла ID: ${fileToDelete}`);
       await api.delete(`/files/${fileToDelete}/`);
       await dispatch(fetchFiles());
       showNotification.success("Файл успешно удален.");
       setFileToDelete(null);
     } catch (error) {
-      console.error("Ошибка при удалении файла:", error);
+      logger.error(`❌ Ошибка при удалении файла ID: ${fileToDelete}: ${error.message}`);
       showNotification.error("Не удалось удалить файл.");
     }
   };

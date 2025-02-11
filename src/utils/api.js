@@ -19,6 +19,7 @@ api.interceptors.request.use(
     }
 
     logger.info(`📡 API Request: ${config.method.toUpperCase()} ${config.url}`);
+    logger.info(`📝 Данные запроса: ${JSON.stringify(config.data)}`);
     return config;
   },
   (error) => {

@@ -61,8 +61,12 @@ export const registerUser = createAsyncThunk(
       logger.info("✅ Пользователь успешно зарегистрирован");
       return user;
     } catch (error) {
-      logger.error("❌ Ошибка регистрации: " + error.message);
       const errorResponse = error.response?.data || error.message || "Ошибка регистрации";
+      if (error.response?.status === 400) {
+        logger.warn(`⚠️ Ошибка регистрации: некорректные данные (${JSON.stringify(errorResponse)})`);
+      } else {
+        logger.error(`❌ Ошибка регистрации: ${error.message}`);
+      }
       return rejectWithValue(
         typeof errorResponse === "object" ? JSON.stringify(errorResponse) : errorResponse
       );
@@ -73,18 +77,21 @@ export const registerUser = createAsyncThunk(
 // Асинхронное действие для авторизации
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async (credentials, { rejectWithValue, dispatch }) => {
+  async ({ username, password }, { rejectWithValue, dispatch }) => {
     try {
-      logger.info(`🔑 Авторизация пользователя: ${credentials.username}`);
-      const tokenResponse = await api.post("/token/", credentials);
-      const { access, refresh } = tokenResponse.data;
+      logger.info(`🔑 Авторизация пользователя: ${username}`);
 
+      const tokenResponse = await api.post("/token/", { username, password }, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const { access, refresh } = tokenResponse.data;
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
       logger.info("🔐 Токен получен после входа");
 
-      // Загружаем информацию о пользователе
+      // Загружаем данные пользователя
       const userData = await dispatch(fetchCurrentUser()).unwrap();
 
       dispatch(setCredentials({ 
@@ -96,11 +103,21 @@ export const loginUser = createAsyncThunk(
       logger.info("✅ Пользователь успешно вошел");
       return userData;
     } catch (error) {
-      logger.error("❌ Ошибка авторизации: " + error.message);
-      return rejectWithValue(error.response?.data || "Ошибка входа");
+      // Проверяем, есть ли ответ от сервера
+      const errorMessage = error.response?.data || "Ошибка входа";
+      
+      if (error.response?.status === 401) {
+        logger.warn(`⚠️ Неверные учетные данные для ${username}`);
+      } else {
+        logger.error(`❌ Ошибка авторизации: ${error.message}`);
+      }
+
+      logger.error(`🚨 Ответ сервера: ${JSON.stringify(errorMessage)}`);
+      return rejectWithValue(errorMessage);
     }
   }
 );
+
 
 // Асинхронное действие для обновления токенов
 export const refreshAccessToken = createAsyncThunk(

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { AlertTriangle } from 'lucide-react';
 
 const ConfirmationModal = ({ 

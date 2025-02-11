@@ -2,13 +2,10 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { registerUser, clearAuthState } from "../features/authSlice";
+import logger from "../utils/logger";
 
-// Импортируем вынесенные компоненты
 import RegisterHeader from "../components/Register/RegisterHeader";
 import RegisterForm from "../components/Register/RegisterForm";
-
-// Иконки могут остаться здесь, если они нужны только для логики (у нас в данном случае нет)
-// import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 const RegisterPage = () => {
   const dispatch = useDispatch();
@@ -40,7 +37,6 @@ const RegisterPage = () => {
 
   // Если регистрация прошла успешно, переходим на /dashboard
   useEffect(() => {
-    console.log("authUser после регистрации:", user);
     if (success && user ) {
       navigate("/dashboard");
     }
@@ -116,6 +112,11 @@ const RegisterPage = () => {
     }
 
     setValidationErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      logger.warn(`⚠️ Ошибка валидации: ${JSON.stringify(errors)}`);
+    }
+
     return Object.keys(errors).length === 0;
   };
 

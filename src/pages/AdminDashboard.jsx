@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchUsers } from "../features/userSlice";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
+import logger from "../utils/logger";
 
 import Header from "../components/Admin/Header";
 import UserTable from "../components/Admin/UserTable";
@@ -22,47 +23,59 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (authUser === null) {
+      logger.info("⏳ Ожидание загрузки данных аутентификации...");
       return; // Ждем загрузку пользователя
     }
 
     // Если пользователь не админ — перенаправляем на главную страницу
     if (!authUser?.is_admin) {
-        navigate("/dashboard");
+      logger.warn(`🚫 Доступ запрещен: пользователь ${authUser.username} перенаправлен.`);
+      navigate("/dashboard");
     } else {
-        dispatch(fetchUsers());
+      logger.info("📂 Загрузка списка пользователей...");
+      dispatch(fetchUsers());
     }
   }, [dispatch, authUser, navigate]);
 
   const toggleAdmin = async (id, isAdmin) => {
-      if (id === authUser.id) {
-          return;
-      }
+    if (id === authUser.id) {
+      logger.warn("⚠️ Попытка изменить свой собственный статус администратора заблокирована.");
+      return;
+    }
 
-      try {
-          await api.patch(`/admin/users/${id}/`, { is_admin: !isAdmin });
-          dispatch(fetchUsers()); // Обновляем список
-      } catch (error) {
-          console.error("Ошибка изменения статуса", error);
-      }
+    try {
+      await api.patch(`/admin/users/${id}/`, { is_admin: !isAdmin });
+      logger.info(
+        `🔄 Статус администратора изменён: пользователь ID ${id} теперь ${!isAdmin ? "администратор" : "обычный пользователь"}.`
+      );
+      dispatch(fetchUsers()); // Обновляем список
+    } catch (error) {
+      logger.error(`❌ Ошибка изменения статуса пользователя ID ${id}: ${error.message}`);
+    }
   };
 
   const deleteUser = async (id) => {
-      if (id === authUser.id) {
-          return;
-      }
+    if (id === authUser.id) {
+      logger.warn("⚠️ Попытка удалить себя заблокирована.");
+      return;
+    }
 
-      try {
-          await api.delete(`/admin/users/${id}/delete/`);
-          dispatch(fetchUsers()); // Обновляем список
-          setConfirmDelete(null);
-      } catch (error) {
-          console.error("Ошибка удаления пользователя", error);
-      }
+    try {
+      await api.delete(`/admin/users/${id}/delete/`);
+      logger.warn(`🗑️ Пользователь ID ${id} удалён.`);
+      dispatch(fetchUsers()); // Обновляем список
+      setConfirmDelete(null);
+    } catch (error) {
+      logger.error(`❌ Ошибка удаления пользователя ID ${id}: ${error.message}`);
+    }
   };
 
   if (authUser === null) return <LoadingSpinner />;
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
+  if (error) {
+    logger.error(`❌ Ошибка загрузки пользователей: ${error}`);
+    return <ErrorMessage message={error} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

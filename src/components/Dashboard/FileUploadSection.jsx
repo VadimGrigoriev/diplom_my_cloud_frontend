@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Upload, X, CheckCircle2, MessageSquare } from 'lucide-react';
 import CustomAlert from './Modals/CustomAlert';
+import logger from '../../utils/logger';
 
 const FileUploadSection = ({
   loading,
@@ -14,7 +15,7 @@ const FileUploadSection = ({
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [editingCommentId, setEditingCommentId] = useState(null);
-
+ 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,9 +32,13 @@ const FileUploadSection = ({
     setDragActive(false);
     
     const newFiles = [...e.dataTransfer.files];
-    addFilesToList(newFiles);
+    if (newFiles.length > 0) {
+      logger.info(`📂 Файлы добавлены через drag-and-drop: ${newFiles.length} шт.`);
+      addFilesToList(newFiles);
+    }
   };
 
+  // Добавление файлов в список на загрузку
   const addFilesToList = (newFiles) => {
     const dt = new DataTransfer();
     
@@ -45,18 +50,24 @@ const FileUploadSection = ({
     
     setError('');
     setSelectedFiles(dt.files);
+
+    logger.info(`📂 Добавлено файлов: ${newFiles.length}`);
   };
 
+  // Добавление файлов в список через input
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
     if (newFiles.length > 0) {
+      logger.info(`📂 Файлы выбраны через input: ${newFiles.length} шт.`);
       addFilesToList(newFiles);
     }
   };
 
+  // Удаление файла с очереди на загрузку
   const removeFile = (index) => {
     const dt = new DataTransfer();
     const files = Array.from(selectedFiles);
+    const removedFile = files[index].name;
     files.splice(index, 1);
     files.forEach(file => dt.items.add(file));
     setSelectedFiles(dt.files);
@@ -65,8 +76,11 @@ const FileUploadSection = ({
     const newComments = { ...fileComments };
     delete newComments[index];
     setFileComments(newComments);
+
+    logger.warn(`🗑️ Файл удалён: ${removedFile}`);
   };
 
+  // Добавление комментария к файлу/файлам
   const handleCommentChange = (index, comment) => {
     setFileComments(prev => ({
       ...prev,
@@ -76,6 +90,7 @@ const FileUploadSection = ({
 
   const handleUploadWithComments = () => {
     // Создаем FormData с файлами и комментариями
+    logger.info(`📤 Начинаем загрузку ${selectedFiles.length} файлов...`);
     const formData = new FormData();
     Array.from(selectedFiles).forEach((file, index) => {
       formData.append("files", file);

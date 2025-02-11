@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Для навигации
+import { useNavigate } from "react-router-dom";
 import SuccessMessage from "../components/ForgotPassword/SuccessMessage";
 import ErrorMessage from "../components/ForgotPassword/ErrorMessage";
 import VerificationForm from "../components/ForgotPassword/VerificationForm";
 import ResetPasswordForm from "../components/ForgotPassword/ResetPasswordForm";
 import validatePassword from "../utils/validatePassword";
 import api from "../utils/api";
+import logger from "../utils/logger";
 
-// Основной компонент страницы
 const ForgotPasswordPage = () => {
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
@@ -21,6 +21,7 @@ const ForgotPasswordPage = () => {
 
   useEffect(() => {
     if (localStorage.getItem("passwordResetSuccess") === "true") {
+      logger.info("🔄 Автоматический редирект на страницу входа после успешного сброса пароля.");
       localStorage.removeItem("passwordResetSuccess");
       navigate("/login");
     }
@@ -28,6 +29,7 @@ const ForgotPasswordPage = () => {
   
   useEffect(() => {
     if (success) {
+      logger.info("✅ Пароль успешно сброшен. Перенаправляем на страницу входа...");
       localStorage.setItem("passwordResetSuccess", "true");
       const timer = setTimeout(() => {
         localStorage.removeItem("passwordResetSuccess");
@@ -42,39 +44,54 @@ const ForgotPasswordPage = () => {
     setValidationError(null);
   }, [newPassword]);
 
+  // Редирект на начальную страницу при нажатии на "CloudSync"
+  const handleClick = () => {
+    navigate("/");
+  }
+
+  // Проверка пользователя
   const handleVerification = async (e) => {
     e.preventDefault();
     setError(null);
+    logger.info(`🔍 Проверка пользователя: ${username}`);
 
     try {
       const response = await api.post("/auth/verify-user/", {
         username,
         full_name: fullName,
       });
+
       if (response.data.success) {
+        logger.info(`✅ Пользователь ${username} успешно верифицирован.`);
         setStep(2);
       } else {
+        logger.warn(`⚠️ Данные пользователя ${username} не совпадают.`);
         setError("Данные пользователя не совпадают.");
       }
     } catch (err) {
-      console.error("Ошибка при проверке данных:", err);
+      logger.error(`❌ Ошибка при проверке данных пользователя ${username}: ${err.message}`);
       setError("Произошла ошибка. Попробуйте снова.");
     }
   };
 
+  // Сброс пароля
   const handlePasswordReset = async (e) => {
     e.preventDefault();
     setError(null);
     setValidationError(null);
 
+    logger.info(`🔑 Попытка сброса пароля для пользователя: ${username}`);
+
     // Валидация пароля
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
+      logger.warn(`⚠️ Ошибка валидации пароля: ${passwordError}`);
       setValidationError(passwordError);
       return;
     }
 
     if (newPassword !== confirmPassword) {
+      logger.warn("⚠️ Введённые пароли не совпадают.");
       setError("Пароли не совпадают.");
       return;
     }
@@ -84,9 +101,10 @@ const ForgotPasswordPage = () => {
         username,
         new_password: newPassword,
       });
+      logger.info(`✅ Пароль успешно сброшен для пользователя ${username}`);
       setSuccess(true);
     } catch (err) {
-      console.error("Ошибка при сбросе пароля:", err);
+      logger.error(`❌ Ошибка при сбросе пароля пользователя ${username}: ${err.message}`);
       setError("Не удалось сбросить пароль. Попробуйте снова.");
     }
   };
@@ -95,7 +113,12 @@ const ForgotPasswordPage = () => {
     <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-blue-600 mb-4">CloudSync</h2>
+          <h2 
+            className="text-4xl font-bold text-blue-600 mb-4 cursor-pointer hover:text-blue-700"
+            onClick={handleClick}
+          >
+            CloudSync
+          </h2>
           <p className="mt-2 text-gray-600">Восстановление доступа к аккаунту</p>
         </div>
 

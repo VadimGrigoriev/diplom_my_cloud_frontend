@@ -1,34 +1,20 @@
 /* eslint-disable react/prop-types */
 import { useState } from "react";
 import { LogIn, User, Lock, AlertCircle } from "lucide-react";
-import api from "../../utils/api";
 
-const LoginForm = ({
-  onLoginSuccess, // callback, чтобы сообщить родителю об успешном логине
-  onError         // callback, если хотим обработать ошибку во внешнем компоненте
-}) => {
+const LoginForm = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  // Локальный обработчик отправки формы
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      // Запрос на сервер
-      const response = await api.post("token/", { username, password });
-      const { access, refresh } = response.data;
-
-      // Если все ок — вызываем onLoginSuccess 
-      onLoginSuccess({ username, access, refresh });
-    } catch (err) {
-      console.error("Ошибка авторизации:", err);
-      setError("Неверный логин или пароль.");
-      // Если нужен колбэк для ошибки:
-      if (onError) {
-        onError(err);
-      }
+    if (!username || !password) {
+      setError("Заполните все поля!");
+      return;
     }
+    setError(null);
+    onLoginSuccess({ username, password }, setError); // Передаём `setError` в `LoginPage`
   };
 
   return (
