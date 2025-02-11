@@ -13,7 +13,7 @@ import RegisterForm from "../components/Register/RegisterForm";
 const RegisterPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, success } = useSelector((state) => state.auth);
+  const { loading, error, success, user } = useSelector((state) => state.auth);
 
   // Состояние для формы
   const [formData, setFormData] = useState({
@@ -40,10 +40,11 @@ const RegisterPage = () => {
 
   // Если регистрация прошла успешно, переходим на /dashboard
   useEffect(() => {
-    if (success) {
+    console.log("authUser после регистрации:", user);
+    if (success && user ) {
       navigate("/dashboard");
     }
-  }, [success, navigate]);
+  }, [success, navigate, user]);
 
   // Очистка состояния auth при размонтировании (если нужно)
   useEffect(() => {
@@ -64,40 +65,52 @@ const RegisterPage = () => {
   const validateForm = () => {
     const errors = {};
 
-    // Username validation
+    // Валидация логина
     const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]{3,19}$/;
     if (!formData.username) {
-      errors.username = "Имя пользователя обязательно";
+      errors.username = "Введите логин.";
     } else if (!usernameRegex.test(formData.username)) {
       errors.username =
-        "Имя пользователя должно:\n- Начинаться с буквы\n- Содержать только латинские буквы и цифры\n- Быть длиной от 4 до 20 символов";
+        "Логин должен соответствовать требованиям:\n" +
+        "- Только латинские буквы и цифры.\n" +
+        "- Первый символ — буква.\n" +
+        "- Длина от 4 до 20 символов.";
     }
 
-    // Full name validation
+    // Валидация полного имени
     if (!formData.fullName) {
       errors.fullName = "Полное имя обязательно";
     } else if (formData.fullName.length < 3) {
       errors.fullName = "Полное имя должно быть не короче 3 символов";
     }
 
-    // Email validation
+    // Валидация email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!formData.email) {
-      errors.email = "Email обязателен";
+      errors.email = "Введите email.";
     } else if (!emailRegex.test(formData.email)) {
-      errors.email = "Введите корректный email адрес";
+      errors.email =
+        "Введите корректный email. Он должен содержать:\n" +
+        "- Имя почтового ящика (латинские буквы, цифры, . _ % + -).\n" +
+        "- Символ '@' перед доменом.\n" +
+        "- Доменное имя (буквы, цифры, точки, тире).\n" +
+        "- Окончание с минимум 2 латинскими буквами (.com, .ru и т. д.).";
     }
 
-    // Password validation
+    // Валидация пароля
     const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
     if (!formData.password) {
-      errors.password = "Пароль обязателен";
+      errors.password = "Введите пароль.";
     } else if (!passwordRegex.test(formData.password)) {
       errors.password =
-        "Пароль должен содержать:\n- Минимум 6 символов\n- Хотя бы одну заглавную букву\n- Хотя бы одну цифру\n- Хотя бы один специальный символ (!@#$%^&*)";
+        "Пароль должен содержать:\n" +
+        "- Минимум 6 символов.\n" +
+        "- Хотя бы одну заглавную букву.\n" +
+        "- Хотя бы одну цифру.\n" +
+        "- Хотя бы один специальный символ (!@#$%^&*).";
     }
 
-    // Confirm password validation
+    // Повторная проверка пароля
     if (formData.password !== formData.confirmPassword) {
       errors.confirmPassword = "Пароли не совпадают";
     }
@@ -134,13 +147,27 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
       };
-      dispatch(registerUser(userData)).then((response) => {
-        if (response.meta.requestStatus === "fulfilled") {
-          navigate("/dashboard");
-        }
-      });
+      dispatch(registerUser(userData));
     }
   };
+
+  // Обработчик ошибки с Redux
+  useEffect(() => {
+    if (error) {
+      try {
+        // Если ошибка приходит как JSON-строка, распарсим её
+        const parsedError = typeof error === "string" ? JSON.parse(error) : error;
+        if (parsedError.username) {
+          setValidationErrors((prev) => ({
+            ...prev,
+            username: "Этот логин уже занят. Пожалуйста, выберите другой.",
+          }));
+        }
+      } catch (err) {
+        console.error("Ошибка парсинга ошибки с сервера:", err);
+      }
+    }
+  }, [error]);
 
   // Хелпер для преобразования ошибок с переносами строк
   const renderValidationError = (error) => {

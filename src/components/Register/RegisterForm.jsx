@@ -15,19 +15,13 @@ const RegisterForm = ({
   passwordVisibility,
   togglePasswordVisibility,
   loading,
-  error,
 }) => {
   return (
     <form 
       onSubmit={onSubmit}
+      noValidate
       className="bg-white shadow-xl rounded-2xl px-8 pt-6 pb-8 space-y-6"
     >
-      {/* Ошибка от бэкенда (Redux), если есть */}
-      {error && (
-        <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
 
       {/* Поле: Логин */}
       <div>

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../utils/api";
-import { logout } from "../features/authSlice";
+import { logout, fetchCurrentUser } from "../features/authSlice";
 import { fetchFiles, updateComment, renameFile } from "../features/fileSlice";
 import { useNavigate } from "react-router-dom";
 import { showNotification } from "../components/ToastProvider/ToastProvider";
@@ -19,6 +19,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState(null);
   const [selectedFileToComment, setSelectedFileToComment] = useState(null);
+  const [fileComments, setFileComments] = useState({});
   const [comment, setComment] = useState('');
   const [fileToDelete, setFileToDelete] = useState(null);
   const [generatedLink, setGeneratedLink] = useState(null);
@@ -32,9 +33,18 @@ const DashboardPage = () => {
     if (!accessToken) {
       navigate("/"); // Если пользователь не авторизован, отправляем на страницу приветствия
     } else {
+      if (!user) {
+        dispatch(fetchCurrentUser()); // Загружаем данные о пользователе
+      }
       dispatch(fetchFiles()); // Загружаем файлы при загрузке страницы
     }
-  }, [dispatch, accessToken, navigate]);
+  }, [dispatch, accessToken, user, navigate]);
+
+  // Определяем текст приветствия
+  const greetingText = `Привет, ${user?.full_name || user?.username}!`;
+
+  // Определяем, показывать ли кнопку админки
+  const showAdminButton = user?.is_admin || false;
 
   // Обработчик для генерации ссылки для скачивания
   const handleLinkButtonClick = async (fileId) => {
@@ -73,8 +83,14 @@ const DashboardPage = () => {
     }
 
     const formData = new FormData();
-    Array.from(selectedFiles).forEach((file) => {
+
+    // Добавляем файлы и их комментарии в FormData
+    Array.from(selectedFiles).forEach((file, index) => {
       formData.append("files", file);
+      // Если есть комментарий для этого файла, добавляем его
+      if (fileComments[index]) {
+        formData.append(`comments[${index}]`, fileComments[index]);
+      }
     });
 
     try {
@@ -87,6 +103,7 @@ const DashboardPage = () => {
 
       document.getElementById('file-upload').value = '';
       setSelectedFiles(null);
+      setFileComments({}); // Очищаем комментарии после успешной загрузки
 
       showNotification.success("Файлы успешно загружены!");
     } catch (error) {
@@ -172,7 +189,11 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-white text-gray-900">
 
       {/* Navigation Header */}
-      <Header onLogout={handleLogout} />
+      <Header
+        greetingText={greetingText} 
+        showAdminButton={showAdminButton} 
+        onLogout={handleLogout} 
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
@@ -182,6 +203,8 @@ const DashboardPage = () => {
           loading={loading}
           selectedFiles={selectedFiles}
           setSelectedFiles={setSelectedFiles}
+          fileComments={fileComments}
+          setFileComments={setFileComments}
           handleUpload={handleUpload}
         />
 

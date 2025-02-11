@@ -2,6 +2,35 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { showNotification } from "../components/ToastProvider/ToastProvider";
 import api from "../utils/api";
 
+// Загрузка файлов конкретного пользователя (для админов)
+export const fetchUserFiles = createAsyncThunk(
+  "files/fetchUserFiles",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/users/${userId}/files/`);
+      return response.data;
+    } catch (error) {
+      console.error("Ошибка загрузки файлов:", error);
+      return rejectWithValue("Не удалось загрузить файлы.");
+    }
+  }
+);
+
+// Удаление файла (для админки)
+export const deleteFile = createAsyncThunk(
+  "files/deleteFile",
+  async ({ fileId, userId }, { rejectWithValue, dispatch }) => {
+    try {
+      await api.delete(`/admin/files/${fileId}/`);
+      dispatch(fetchUserFiles(userId)); // Обновляем файлы после удаления
+      return fileId;
+    } catch (error) {
+      console.error("Ошибка удаления файла:", error);
+      return rejectWithValue("Не удалось удалить файл.");
+    }
+  }
+);
+
 // Асинхронное действие для загрузки файлов
 export const fetchFiles = createAsyncThunk(
   "files/fetchFiles",
@@ -80,6 +109,21 @@ const fileSlice = createSlice({
       .addCase(fetchFiles.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      .addCase(fetchUserFiles.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserFiles.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.fileList = action.payload;
+      })
+      .addCase(fetchUserFiles.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteFile.fulfilled, (state, action) => {
+        state.fileList = state.fileList.filter((file) => file.id !== action.payload);
       });
   }
 });
