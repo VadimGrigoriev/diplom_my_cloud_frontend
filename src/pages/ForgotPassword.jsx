@@ -44,7 +44,7 @@ const ForgotPasswordPage = () => {
     setValidationError(null);
   }, [newPassword]);
 
-  // Редирект на начальную страницу при нажатии на "CloudSync"
+  // Редирект на начальную страницу при нажатии на "My Cloud"
   const handleClick = () => {
     navigate("/");
   }
@@ -117,7 +117,7 @@ const ForgotPasswordPage = () => {
             className="text-4xl font-bold text-blue-600 mb-4 cursor-pointer hover:text-blue-700"
             onClick={handleClick}
           >
-            CloudSync
+            My Cloud
           </h2>
           <p className="mt-2 text-gray-600">Восстановление доступа к аккаунту</p>
         </div>

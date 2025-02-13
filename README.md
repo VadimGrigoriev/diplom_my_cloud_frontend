@@ -1,8 +1,42 @@
-# React + Vite
+# **My Cloud – Облачное хранилище (Frontend)**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## **Описание**
+My Cloud – это веб-приложение для облачного хранения файлов. Оно позволяет пользователям загружать, скачивать, удалять и управлять своими файлами через веб-интерфейс.
 
-Currently, two official plugins are available:
+Бэкенд разработан на **Django**, а фронтенд – на **React** (в отдельном репозитории). Взаимодействие между частями осуществляется через **REST API (Django REST Framework)**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
+
+## **1. Структура проекта**
+
+### **1.2. Фронтенд (React)**
+📁 `my_cloud_frontend/` – корневая папка фронтенда  
+📁 `src/` – исходный код приложения  
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **`components/`** – UI-компоненты  
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **`pages/`** – страницы приложения  
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **`features/`** – Redux slice-файлы (`authSlice.js`, `fileSlice.js`, `useSlice.js`)  
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **`utils/`** – вспомогательные утилиты  
+
+📄 `package.json` – зависимости и скрипты для сборки  
+📄 `README.md` – инструкция по установке и развертыванию  
+
+---
+
+## **2. Установка и запуск**
+Для работы с проектом потребуется **Node.js (16+)** и **npm**.
+
+### **Шаги установки**
+1. **Клонируйте репозиторий**:
+   ```sh
+   git clone https://github.com/VadimGrigoriev/diplom_my_cloud_frontend
+   cd my_cloud_frontend
+   ```
+2. Установите зависимости:
+   ```sh
+   npm install
+   ```
+3. Запустите фронтенд:
+   ```sh
+   npm run dev
+   ```
+Фронтенд будет доступен по адресу `http://localhost:5173/`.

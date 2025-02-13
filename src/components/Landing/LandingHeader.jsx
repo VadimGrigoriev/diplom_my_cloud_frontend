@@ -4,7 +4,7 @@ const LandingHeader = () => {
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600 tracking-tight">CloudSync</h1>
+        <h1 className="text-2xl font-bold text-blue-600 tracking-tight">My Cloud</h1>
         <div className="space-x-4">
           <Link
             to="/login"

@@ -13,7 +13,7 @@ const LoginHeader = () => {
         className="text-4xl font-bold text-blue-600 mb-4 cursor-pointer hover:text-blue-700"
         onClick={handleClick}
       >
-        CloudSync
+        My Cloud
       </h1>
       <p className="text-gray-600">Войдите в свой аккаунт</p>
     </div>

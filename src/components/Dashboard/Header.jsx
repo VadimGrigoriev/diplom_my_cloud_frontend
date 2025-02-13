@@ -10,7 +10,7 @@ const Header = ({ greetingText, showAdminButton, onLogout }) => {
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <CloudUploadIcon className="w-8 h-8 mr-3" />
-          <h1 className="text-2xl font-bold tracking-tight">CloudSync Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">My Cloud Dashboard</h1>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium">
