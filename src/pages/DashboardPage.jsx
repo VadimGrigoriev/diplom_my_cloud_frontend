@@ -65,7 +65,20 @@ const DashboardPage = () => {
   // Обработчик для скачивания файла по ссылке
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(generatedLink);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(generatedLink);
+      } else {
+        // Fallback на document.execCommand
+        const tempInput = document.createElement('input');
+        tempInput.value = generatedLink;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        if (!success) throw new Error('Копирование не удалось');
+      }
+      
       setCopySuccess(true);
       showNotification.success("Ссылка скопирована!");
       
